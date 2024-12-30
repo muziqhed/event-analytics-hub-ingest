@@ -1,0 +1,29 @@
+name: "EA Hub Ingest Build & Test"
+
+on:
+  # Trigger on pull request creation or updates
+  pull_request:
+    paths:
+      - "server/**" 
+      - "tests/**"
+  push:
+    paths:
+      - "server/**" 
+      - "tests/**"
+
+  
+  workflow_dispatch:
+
+jobs:
+  # Job for pull request validation
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3 
+        
+      - name: Build image
+        run: docker build -t ea-hub-ingest:local-image .
+
+      - name: Run tests
+        run: docker run -v ./tests:/code/tests  ea-hub-ingest:local-image pytest -vv

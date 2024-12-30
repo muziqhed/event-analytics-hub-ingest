@@ -1,0 +1,31 @@
+services:
+  ea-hub-ingest-test:
+    container_name: ea-hub-ingest-test-runner
+    hostname: ea-hub-ingest
+    profiles:
+      - test
+    image: "ea-hub-ingest:local"
+    command: "pytest -vv"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./tests:/code/tests
+    networks:
+      - ea-hub
+
+  ea-hub-postgres:
+    container_name: ea-hub-postgres
+    hostname: ea-hub-postgres
+    profiles:
+      - test
+    image: postgres
+    restart: always
+    networks:
+      - ea-hub
+
+networks:
+  ea-hub:
+    driver: bridge
