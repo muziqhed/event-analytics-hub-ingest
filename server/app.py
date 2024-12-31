@@ -1,9 +1,8 @@
 """
 """
 from flask import Blueprint, Flask
-
-#from server.config.db import db_connect
 from server.config.namespaces import SERVICE_BASE_URL, namespace_init
+from server.config.db import DBConfig, db, migrate
 
 
 def create_flask_app() -> Flask:
@@ -16,5 +15,12 @@ def create_flask_app() -> Flask:
 
 def init_app() -> Flask:
     app = create_flask_app()
-#    db_connect()
+    app.config.from_object(DBConfig)
+    db.init_app(app)
+
+    with app.app_context():
+        db.create_all()
+
+    migrate.init_app(app, db)
+
     return app
