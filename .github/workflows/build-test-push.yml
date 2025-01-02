@@ -38,7 +38,7 @@ jobs:
 
   push_to_registry:
     name: Push Docker image to Docker Hub
-    if: ${{ github.event.pull_request.merged }}
+    if: github.event.pull_request.merged == true
     needs: validate
     runs-on: ubuntu-latest
     permissions:
