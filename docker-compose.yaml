@@ -1,11 +1,9 @@
 services:
-  ea-hub-ingest-test:
-    container_name: ea-hub-ingest-test-runner
+  ea-hub-ingest:
+    container_name: ea-hub-ingest
     hostname: ea-hub-ingest
-    profiles:
-      - test
     image: "ea-hub-ingest:local"
-    command: "pytest -vv"
+    command: pytest -vv
     build:
       context: .
       dockerfile: Dockerfile
@@ -13,18 +11,33 @@ services:
       - "5000:5000"
     volumes:
       - ./tests:/code/tests
+    environment:
+      - POSTGRES_USER=eahubdbuser
+      - POSTGRES_DB=eahub_db
+      - POSTGRES_URL=postgresql://eahubdbuser:$POSTGRES_PASSWORD@ea-hub-postgres:5432/eahub_db
     networks:
       - ea-hub
 
   ea-hub-postgres:
     container_name: ea-hub-postgres
     hostname: ea-hub-postgres
-    profiles:
-      - test
-    image: postgres
+    image: postgres:14-alpine
     restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=eahubdbuser
+      - POSTGRES_DB=eahub_db
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+    volumes:
+      - ./scripts/postgres-initdb.d:/docker-entrypoint-initdb.d/
+      - ea-hub-rdb-volume:/var/lib/postgresql/data
     networks:
       - ea-hub
+
+volumes:
+  ea-hub-rdb-volume:
+
 
 networks:
   ea-hub:
