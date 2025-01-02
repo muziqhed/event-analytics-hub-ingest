@@ -2,7 +2,7 @@ services:
   ea-hub-ingest:
     container_name: ea-hub-ingest
     hostname: ea-hub-ingest
-    image: "ea-hub-ingest:local"
+    image: "muziqhed/event-analytics-hub-ingest:$IMAGE_TAG"
     command: pytest -vv
     build:
       context: .
