@@ -3,9 +3,9 @@ name: "EA Hub Ingest Build & Test"
 on:
   # Trigger on pull request creation or updates
   pull_request:
-
   push:
-  
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
@@ -38,7 +38,7 @@ jobs:
 
   push_to_registry:
     name: Push Docker image to Docker Hub
-    if: github.event.pull_request.merged == true
+    if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
     needs: validate
     runs-on: ubuntu-latest
     permissions:
