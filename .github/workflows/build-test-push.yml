@@ -4,14 +4,14 @@ on:
   # Trigger on pull request creation or updates
   pull_request:
   push:
-    branches:
-      - main
   workflow_dispatch:
 
 jobs:
   # Job for pull request validation
   validate:
     runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.docker-tags.outputs.image_tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3 
@@ -19,16 +19,19 @@ jobs:
       - name: Generate Docker Tags
         id: docker-tags
         run: |
-          # Define base tag (e.g., based on branch or event)
           if [[ "${{ github.ref_name }}" == "main" ]]; then
             echo "IMAGE_TAG=latest" >> $GITHUB_ENV
+            echo "image_tag=latest" >> $GITHUB_OUTPUT
           else
             SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-            echo "IMAGE_TAG=dev-${SHORT_SHA}" >> $GITHUB_ENV
-            echo "IMAGE_TAG=dev-${SHORT_SHA}" >> .env
+            IMAGE_TAG=dev-${SHORT_SHA}
+            echo "IMAGE_TAG=${IMAGE_TAG}" >> .env
+            echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
           fi
-          # Generate unique tag with SHA or timestamp
-          
+
+      - name: Debug Image Tag
+        run: | 
+          echo "Image Tag: ${{ steps.docker-tags.outputs.image_tag }}"
 
       - name: Build image
         run: echo "POSTGRES_PASSWORD=sometestdbpassword" >> .env && docker compose build
@@ -38,9 +41,9 @@ jobs:
 
   push_to_registry:
     name: Push Docker image to Docker Hub
-    if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
     needs: validate
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
     permissions:
       packages: write
       contents: read
@@ -64,11 +67,5 @@ jobs:
         uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
         with:
           push: true
-          tags: muziqhed/event-analytics-hub-ingest:${{ env.IMAGE_TAG }}
+          tags: "muziqhed/event-analytics-hub-ingest:${{ needs.validate.outputs.image_tag }}"
 
-      - name: Generate artifact attestation
-        uses: actions/attest-build-provenance@v2
-        with:
-          subject-name: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}
-          subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true
